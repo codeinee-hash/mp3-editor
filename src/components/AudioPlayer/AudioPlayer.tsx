@@ -29,7 +29,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
 
   const effectiveDuration = totalDuration > 0 ? totalDuration : loadedDuration
 
-  // Re-sync and load when audioUrl changes
+  // Re-sync and load ONLY when audioUrl changes (switching track)
   useEffect(() => {
     const audio = audioRef.current
     if (audio) {
@@ -39,12 +39,11 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
       setIsLoading(false)
       setHasError(false)
       setCurrentTime(0)
-      audio.volume = isMuted ? 0 : volume
       audio.load()
     }
-  }, [audioUrl, isMuted, volume])
+  }, [audioUrl])
 
-  // Sync volume
+  // Sync volume smoothly without interrupting playback
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = isMuted ? 0 : volume
@@ -102,16 +101,19 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newVol = parseFloat(e.target.value)
     setVolume(newVol)
+    if (audioRef.current) {
+      audioRef.current.volume = newVol
+    }
     if (newVol > 0 && isMuted) {
       setIsMuted(false)
     }
   }
 
   const toggleMute = () => {
-    if (isMuted) {
-      setIsMuted(false)
-    } else {
-      setIsMuted(true)
+    const nextMuted = !isMuted
+    setIsMuted(nextMuted)
+    if (audioRef.current) {
+      audioRef.current.volume = nextMuted ? 0 : volume
     }
   }
 
